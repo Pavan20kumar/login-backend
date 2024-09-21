@@ -78,7 +78,7 @@ app.post('/forgot-password', (req, res) => {
                 subject: 'Reset Password',
                 html: `
                     <p>Click the following link to reset your password:</p>
-                    <a href="http://localhost:3000/reset-password/${token}">Reset Password</a>
+                    <a href="login-react-theta-ten.vercel.app/reset-password/${token}">Reset Password</a>
                 `
                 
             };
