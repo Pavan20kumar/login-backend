@@ -3,7 +3,6 @@ const cors = require('cors');
 const mysql2 = require('mysql2');
 const jsonwebtoken = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-const io = require('socket.io');
 
 
 
@@ -26,7 +25,8 @@ app.post('/login', (req, res) => {
     pool.query('SELECT * FROM login WHERE email = ? AND password = ?', [email, password], (err, result) => {
         if (err) {
             res.status(500).json({ error: 'Internal Server Error' });
-        } else if (result.length > 0) {
+        } 
+        else if (email === email && password === password) {
             const token = jsonwebtoken.sign({ email}, 'secret_key');
             res.json({ token });
         } else {
@@ -37,6 +37,8 @@ app.post('/login', (req, res) => {
 });
 
 
+
+
 app.post('/register', (req, res) => {
     const { name, age, email, password } = req.body;
     pool.query('INSERT INTO login (name,age, email, password) VALUES (?, ?, ?,?)', [name, age,email, password], (err, result) => {
@@ -44,7 +46,17 @@ app.post('/register', (req, res) => {
             res.status(500).json({ error: 'Internal Server Error' });
 
 
-        } else {
+        } if (result.affectedRows === 0) {
+            res.status(400).json({ error: 'User already exists' });
+        }
+        if(name === '' || age === '' || email === '' || password === ''){
+            res.status(400).json({ error: 'Please fill all the fields' });
+        }
+        
+        
+        
+        
+        else {
             res.json({ message: 'User registered successfully' });
 
 
@@ -78,7 +90,7 @@ app.post('/forgot-password', (req, res) => {
                 subject: 'Reset Password',
                 html: `
                     <p>Click the following link to reset your password:</p>
-                    <a href="login-react-theta-ten.vercel.app/reset-password/${token}">Reset Password</a>
+                    <a href="http://localhost:3000/reset-password/${token}">Reset Password</a>
                 `
                 
             };
@@ -111,6 +123,38 @@ app.post('/reset-password/:token', (req, res) => {
         res.status(401).json({ error: 'Invalid token' });
     }
 })
+
+
+
+app.get('/login-user', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+    const decoded = jsonwebtoken.verify(token, 'secret_key');
+    pool.query('SELECT name, email FROM login WHERE email = ?', [decoded.email], (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json({ user: result[0] });
+    });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+
+
+
+
+
+
+
 
 
 
